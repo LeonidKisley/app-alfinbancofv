@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 
+// Mantenemos consistencia utilizando la paleta centralizada del proyecto
+class AlfinColors {
+  static const Color purpura = Color(0xFF8B2BB3);
+  static const Color naranja = Color(0xFFFF4E00);
+  static const Color naranjaFuerte = Color.fromARGB(255, 245, 75, 2);
+  static const Color fondo = Color(0xFFF4F6F9);
+}
+
 class ClientesControlScreen extends StatefulWidget {
   const ClientesControlScreen({super.key});
 
@@ -8,7 +16,7 @@ class ClientesControlScreen extends StatefulWidget {
 }
 
 class _ClientesControlScreenState extends State<ClientesControlScreen> {
-  // Lista simulada de clientes globales administrados por la agencia
+  // Mock de datos locales simulando la respuesta del backend para el control de la agencia
   final List<Map<String, dynamic>> _clientes = [
     {
       'nombre': 'María Choquehuanca',
@@ -16,7 +24,6 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
       'negocio': 'Bodega "Mi Paquita"',
       'estadoCredito': 'En Evaluación',
       'montoSolicitado': 5000.00,
-      // APARTADO DE SCORING
       'scoreFico': 710, 
       'scoreColor': Colors.green,
       'riesgo': 'Bajo',
@@ -29,7 +36,6 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
       'negocio': 'Calzados El Sol',
       'estadoCredito': 'Pre-aprobado',
       'montoSolicitado': 8000.00,
-      // APARTADO DE SCORING
       'scoreFico': 640,
       'scoreColor': Colors.orange,
       'riesgo': 'Medio',
@@ -42,7 +48,6 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
       'negocio': 'Restobar El Gol',
       'estadoCredito': 'Rechazado',
       'montoSolicitado': 15000.00,
-      // APARTADO DE SCORING
       'scoreFico': 420,
       'scoreColor': Colors.redAccent,
       'riesgo': 'Alto',
@@ -55,17 +60,14 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color purpuraAlfin = Color(0xFF8B2BB3);
-    const Color naranjaAlfin = Color(0xFFF15A24);
-
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AlfinColors.fondo,
       appBar: AppBar(
         title: const Text(
           "Control Global de Clientes",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        backgroundColor: purpuraAlfin,
+        backgroundColor: AlfinColors.purpura,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -74,32 +76,12 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Buscador por DNI o Nombre
-            TextField(
-              keyboardType: TextInputType.text,
-              decoration: InputDecoration(
-                hintText: "Buscar por DNI o Nombre del cliente...",
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[200]!),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[200]!),
-                ),
-              ),
-            ),
+            _buildBuscador(),
             const SizedBox(height: 16),
-
-            // Contenido Principal condicional
             Expanded(
               child: _clienteSeleccionado == null 
-                  ? _buildListaClientes(purpuraAlfin)
-                  : _buildDetalleYScoringCliente(purpuraAlfin, naranjaAlfin),
+                  ? _buildListaClientes()
+                  : _buildDetalleYScoringCliente(),
             ),
           ],
         ),
@@ -107,8 +89,30 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
     );
   }
 
-  // Vista 1: Listado de Clientes de la Agencia
-  Widget _buildListaClientes(Color purpuraAlfin) {
+  // Barra de filtrado superior
+  Widget _buildBuscador() {
+    return TextField(
+      keyboardType: TextInputType.text,
+      decoration: InputDecoration(
+        hintText: "Buscar por DNI o Nombre del cliente...",
+        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+      ),
+    );
+  }
+
+  // Vista general: Listado de cartera asignada
+  Widget _buildListaClientes() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -133,7 +137,7 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
                 child: ListTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFF5EEF9),
-                    child: Icon(Icons.person_outline, color: Color(0xFF8B2BB3)),
+                    child: Icon(Icons.person_outline, color: AlfinColors.purpura),
                   ),
                   title: Text(client['nombre'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   subtitle: Text("DNI: ${client['dni']} • ${client['negocio']}"),
@@ -152,22 +156,21 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
     );
   }
 
-  // Vista 2: Ficha del cliente enfocado con el APARTADO DE SCORING CENTRAL
-  Widget _buildDetalleYScoringCliente(Color purpura, Color naranja) {
+  // Vista de detalle: Despliegue de variables de riesgo y Scoring FICO
+  Widget _buildDetalleYScoringCliente() {
     final client = _clienteSeleccionado!;
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Botón para regresar a la lista de clientes
           TextButton.icon(
             onPressed: () => setState(() => _clienteSeleccionado = null),
             icon: const Icon(Icons.arrow_back, size: 16, color: Colors.grey),
             label: const Text("Volver al listado", style: TextStyle(color: Colors.grey)),
           ),
           
-          // Cabecera del Cliente (Corregido el error de border y padding interno)
+          // Información básica del negocio y estado actual de la solicitud
           Card(
             elevation: 0,
             color: Colors.white,
@@ -181,8 +184,8 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: purpura.withOpacity(0.1),
-                    child: Icon(Icons.storefront_outlined, color: purpura, size: 24),
+                    backgroundColor: AlfinColors.purpura.withOpacity(0.1),
+                    child: const Icon(Icons.storefront_outlined, color: AlfinColors.purpura, size: 24),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -192,7 +195,7 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
                         Text(client['nombre'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         Text("DNI: ${client['dni']} | Solicitud: S/ ${client['montoSolicitado'].toStringAsFixed(0)}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
                         const SizedBox(height: 4),
-                        Text("Estado: ${client['estadoCredito']}", style: TextStyle(color: naranja, fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text("Estado: ${client['estadoCredito']}", style: const TextStyle(color: AlfinColors.naranjaFuerte, fontWeight: FontWeight.bold, fontSize: 13)),
                       ],
                     ),
                   ),
@@ -202,13 +205,13 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
           ),
           const SizedBox(height: 20),
 
-          // ================= SECCIÓN CRÍTICA: APARTADO DE SCORING =================
           const Text(
             "Análisis de Scoring Integrado",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           const SizedBox(height: 12),
 
+          // Contenedor principal de la matriz de riesgos
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -220,7 +223,6 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Fila Score Principal
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -246,7 +248,6 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
                   ),
                   const Divider(height: 24, thickness: 0.8),
 
-                  // Variable 1: Nivel de Riesgo
                   _buildScoringRow(
                     label: "Nivel de Riesgo Calificado",
                     value: client['riesgo'].toUpperCase(),
@@ -255,7 +256,6 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Variable 2: Comportamiento de Pago
                   _buildScoringRow(
                     label: "Historial Crediticio",
                     value: client['comportamiento'],
@@ -264,11 +264,10 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Variable 3: Capacidad de Pago
                   _buildScoringRow(
                     label: "Capacidad de Pago Calculada",
                     value: client['capacidadPago'],
-                    valueColor: purpura,
+                    valueColor: AlfinColors.purpura,
                     icon: Icons.monetization_on_outlined
                   ),
                 ],
@@ -277,16 +276,16 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Botón de Acción Administrativa rápida
+          // Trigger manual para actualización asíncrona de buros de crédito
           SizedBox(
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
               onPressed: () {
-                // Flujo para forzar re-evaluación o recalcular Scoring
+                // TODO: Enlazar con el provider para recalcular scoring via API
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: purpura,
+                backgroundColor: AlfinColors.purpura,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0
               ),
@@ -298,7 +297,6 @@ class _ClientesControlScreenState extends State<ClientesControlScreen> {
     );
   }
 
-  // Componente de fila estilizada para las variables del scoring
   Widget _buildScoringRow({required String label, required String value, required Color valueColor, required IconData icon}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

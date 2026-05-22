@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
-// Asegúrate de importar la pantalla de control que creamos en el paso anterior
 import 'package:alfinbancoventaapp/features/dashboard/fuerzaventascontrolscreen.dart';
-// NUEVA IMPORTACIÓN DE LA CARTERA DIARIA
 import 'package:alfinbancoventaapp/features/cartera/presentacion/screens/listacarterascreen.dart';
+
+// Paleta corporativa unificada para la consistencia visual de la plataforma
+class AlfinColors {
+  static const Color purpura = Color(0xFF8B2BB3);
+  static const Color naranja = Color(0xFFFF4E00);
+  static const Color naranjaFuerte = Color.fromARGB(255, 245, 75, 2);
+  static const Color adminAcento = Colors.teal;
+  static const Color fondo = Color(0xFFF4F6F9);
+}
 
 class AdminDashboardScreen extends StatefulWidget {
   final String adminNombre;
-  final String rol; // Ejemplo: "Jefe de Agencia" o "Administrador Central"
+  final String rol; 
 
   const AdminDashboardScreen({
     super.key, 
@@ -21,7 +28,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _mostrarMetricas = true;
 
-  // Lista simulada de alertas críticas o créditos en cola para Comité
+  // Cola de expedientes pendientes de aprobación asíncrona por el comité
   final List<Map<String, dynamic>> _colaComite = [
     {
       'analista': 'Carlos Mendoza (SJL)',
@@ -47,37 +54,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Manteniendo la identidad visual exacta de Alfin Banco
-    const Color purpuraAlfin = Color(0xFF8B2BB3);
-    const Color naranjaAlfin = Color(0xFFF15A24);
-
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Panel: ${widget.adminNombre}",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            Text(
-              widget.rol,
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
-            ),
-          ],
-        ),
-        backgroundColor: purpuraAlfin,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: () {}),
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
+      backgroundColor: AlfinColors.fondo,
+      appBar: _buildAppBar(),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Padding(
@@ -85,69 +64,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Tarjeta Superior con Indicadores Macro (mismo diseño que el balance del cliente)
-              _buildMacroBalanceCard(purpuraAlfin, naranjaAlfin),
+              _buildMacroBalanceCard(),
               const SizedBox(height: 20),
-
-              // FILA DE ACCIONES RÁPIDAS PARA EL ADMINISTRADOR (MODIFICADA CON 3 BOTONES)
-              Row(
-                children: [
-                  Flexible(
-                    flex: 1,
-                    child: _buildAdminActionButton(
-                      context: context,
-                      label: "Control\nClientes",
-                      icon: Icons.people_alt_outlined,
-                      color: naranjaAlfin,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Módulo de Control de Clientes próximamente")),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    flex: 1,
-                    child: _buildAdminActionButton(
-                      context: context,
-                      label: "Fuerza de\nVentas",
-                      icon: Icons.badge_outlined,
-                      color: purpuraAlfin,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const FuerzaVentasControlScreen()),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // NUEVO BOTÓN: MI CARTERA DIARIA DE PREAPROBADOS
-                  Flexible(
-                    flex: 1,
-                    child: _buildAdminActionButton(
-                      context: context,
-                      label: "Cartera\nDiaria",
-                      icon: Icons.assignment_outlined,
-                      color: Colors.teal, // Color diferenciado para destacar el nuevo módulo
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ListaCarteraScreen()),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              _buildSeccionAccionesRapidas(),
               const SizedBox(height: 25),
-              
-              // Banner de Campaña Informativa / Metas de Agencia
-              _buildMetaAgenciaCard(purpuraAlfin, naranjaAlfin),
+              _buildMetaAgenciaCard(),
               const SizedBox(height: 25),
-              
-              // Sección de Monitoreo Rápido de Estados
               const Text(
                 "Resumen de Canales", 
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
@@ -165,73 +87,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 title: "Fichas de Campo ingresadas",
                 subtitle: "Evaluaciones acumuladas esta semana",
                 count: "34",
-                color: Colors.teal,
+                color: AlfinColors.adminAcento,
               ),
-
               const SizedBox(height: 25),
-              
-              // Lista de Tareas Críticas del Administrador (Mismo diseño que Últimos Movimientos)
               const Text(
                 "Pendientes por Resolver (Comité)", 
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
               const SizedBox(height: 12),
-              
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _colaComite.length,
-                itemBuilder: (context, index) {
-                  final item = _colaComite[index];
-
-                  return Card(
-                    elevation: 0,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      side: BorderSide(color: Colors.grey[200]!),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      leading: CircleAvatar(
-                        backgroundColor: item['colorScore'].withOpacity(0.1),
-                        child: Icon(Icons.gavel_rounded, color: item['colorScore']),
-                      ),
-                      title: Text(
-                        item['cliente'], 
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 2),
-                          Text("${item['negocio']} • ${item['analista']}", style: const TextStyle(fontSize: 12)),
-                          const SizedBox(height: 4),
-                          Text("Score Final: ${item['scoreFinal']} pts", style: TextStyle(fontSize: 11, color: item['colorScore'], fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            _mostrarMetricas ? "S/ ${item['montoPropuesto'].toStringAsFixed(0)}" : "S/ ••••••",
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item['estado'], 
-                            style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        // Abrir detalle para evaluar en Comité de Crédito
-                      },
-                    ),
-                  );
-                },
-              ),
+              _buildListaComite(),
               const SizedBox(height: 20),
             ],
           ),
@@ -240,16 +104,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Tarjeta de métricas macro (Equivalente al Balance Card del Cliente)
-  Widget _buildMacroBalanceCard(Color primary, Color secondary) {
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Panel: ${widget.adminNombre}",
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          Text(
+            widget.rol,
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          ),
+        ],
+      ),
+      backgroundColor: AlfinColors.purpura,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      actions: [
+        IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: () {}),
+        IconButton(
+          icon: const Icon(Icons.logout_outlined),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacroBalanceCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [primary, secondary],
+          colors: [AlfinColors.purpura, AlfinColors.naranjaFuerte],
         ),
         borderRadius: BorderRadius.circular(20),
       ),
@@ -278,13 +169,58 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Botón de acción rápida (Modificado para soportar textos largos con tamaño compacto y centrado de contenido)
-  Widget _buildAdminActionButton({required BuildContext context, required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildSeccionAccionesRapidas() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildAdminActionButton(
+            label: "Control\nClientes",
+            icon: Icons.people_alt_outlined,
+            color: AlfinColors.naranjaFuerte,
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Módulo de Control de Clientes próximamente")),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildAdminActionButton(
+            label: "Fuerza de\nVentas",
+            icon: Icons.badge_outlined,
+            color: AlfinColors.purpura,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FuerzaVentasControlScreen()),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildAdminActionButton(
+            label: "Cartera\nDiaria",
+            icon: Icons.assignment_outlined,
+            color: AlfinColors.adminAcento, 
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ListaCarteraScreen()),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdminActionButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
       child: Container(
-        width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
         decoration: BoxDecoration(
           color: Colors.white, 
@@ -307,24 +243,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Banner informativo del estado de la agencia (Equivalente al Campaign Card)
-  Widget _buildMetaAgenciaCard(Color primary, Color secondary) {
+  Widget _buildMetaAgenciaCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: primary.withOpacity(0.06), 
+        color: AlfinColors.purpura.withOpacity(0.06), 
         borderRadius: BorderRadius.circular(15), 
-        border: Border.all(color: primary.withOpacity(0.15)),
+        border: Border.all(color: AlfinColors.purpura.withOpacity(0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
-          Row(
+          const Row(
             children: [
-              Icon(Icons.analytics, color: secondary, size: 24), 
+              Icon(Icons.analytics, color: AlfinColors.naranjaFuerte, size: 24), 
               const SizedBox(width: 8), 
-              const Text("Cumplimiento de Meta de Agencia", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF8B2BB3))),
+              Text("Cumplimiento de Meta de Agencia", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AlfinColors.purpura)),
             ],
           ),
           const SizedBox(height: 8),
@@ -336,8 +271,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: ElevatedButton(
               onPressed: () {}, 
               style: ElevatedButton.styleFrom(
-                backgroundColor: secondary, 
+                backgroundColor: AlfinColors.naranjaFuerte, 
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
               ), 
               child: const Text("VER REPORTE DETALLADO", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
             ),
@@ -347,7 +283,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Ítems de productos/canales (Mismo formato que Mis Productos)
   Widget _buildCanalItem({required IconData icon, required String title, required String subtitle, required String count, required Color color}) {
     return Card(
       elevation: 0, 
@@ -359,6 +294,63 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         trailing: Text(count, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87)),
       ),
+    );
+  }
+
+  Widget _buildListaComite() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _colaComite.length,
+      itemBuilder: (context, index) {
+        final item = _colaComite[index];
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            side: BorderSide(color: Colors.grey[200]!),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: CircleAvatar(
+              backgroundColor: item['colorScore'].withOpacity(0.1),
+              child: Icon(Icons.gavel_rounded, color: item['colorScore']),
+            ),
+            title: Text(
+              item['cliente'], 
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 2),
+                Text("${item['negocio']} • ${item['analista']}", style: const TextStyle(fontSize: 12)),
+                const SizedBox(height: 4),
+                Text("Score Final: ${item['scoreFinal']} pts", style: TextStyle(fontSize: 11, color: item['colorScore'], fontWeight: FontWeight.bold)),
+              ],
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _mostrarMetricas ? "S/ ${item['montoPropuesto'].toStringAsFixed(0)}" : "S/ ••••••",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item['estado'], 
+                  style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            onTap: () {
+              // Apertura de flujo para la dictaminación del crédito
+            },
+          ),
+        );
+      },
     );
   }
 }

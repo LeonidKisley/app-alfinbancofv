@@ -39,7 +39,7 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
   String _segmentoCliente = 'BASICO';
 
   // --- VARIABLES DE GEOLOCALIZACIÓN DEL CLIENTE ---
-  LatLng _posicionNegocio = const LatLng(-12.046374, -75.047141); // Fallback Huancayo/Lima
+  LatLng _posicionNegocio = const LatLng(-12.046374, -75.047141); 
 
   // --- CONTROLADOR DE PESTAÑAS ---
   late TabController _tabController;
@@ -146,6 +146,9 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
     Position? posicionAsesor = await _obtenerUbicacionAsesor();
 
     try {
+      double ventasDeclaradas = double.tryParse(_f2VentasDiariasController.text) ?? 0.0;
+      double deudasInformales = double.tryParse(_f3DeudasInformalesController.text) ?? 0.0;
+
       await _supabase.from('fichas_campo').insert({
         'id_preaprobado': widget.creditoPreaprobado['id'],
         'monto_verificado': _montoSugeridoAsesor,
@@ -155,6 +158,11 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
         'observaciones': justify,
         'latitud_asesor': posicionAsesor?.latitude,
         'longitud_asesor': posicionAsesor?.longitude,
+        'f1_negocio_existe': _f1NegocioExiste,
+        'f2_ventas_diarias': ventasDeclaradas,
+        'f3_deudas_informales': deudasInformales,
+        'f4_tiene_activos': _f4TieneActivos,
+        'f5_reputacion': _f5ReputacionCaracter,
       });
 
       await _supabase
@@ -255,11 +263,7 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
   Widget build(BuildContext context) {
     final cliente = widget.creditoPreaprobado['perfiles_clientes'] ?? {};
     final String nombreCompleto = '${cliente['nombres'] ?? 'Cliente'} ${cliente['apellidos'] ?? ''}';
-    
-    // CORRECCIÓN INTEGRADA: Lectura limpia y directa de 'dni' desde el mapa del perfil
     final String dniCliente = cliente['dni'] ?? 'DNI no especificado';
-    
-    // CORRECCIÓN INTEGRADA: Mapeo y formateo real dinámico de la dirección del negocio
     final String direccionNegocio = cliente['direccion_negocio'] ?? 'Dirección no especificada';
     final String distrito = cliente['distrito'] ?? '';
     final String provincia = cliente['provincia'] ?? '';
@@ -298,7 +302,7 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                direccionCompleta, // Muestra dinámicamente el valor real de la base de datos
+                direccionCompleta,
                 style: TextStyle(color: Colors.grey[700], fontSize: 12, height: 1.2),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -321,8 +325,6 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : Column(
               children: [
-                
-                // 1. CONTENEDOR BLANCO SUPERIOR CON EFECTO SHIMMER ACOTADO
                 Padding(
                   padding: const EdgeInsets.all(14.0),
                   child: Container(
@@ -451,7 +453,7 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
                             controller: _tabController,
                             children: [
                               
-                              // PESTAÑA EVALUACIÓN
+                              // PESTAÑA EVALUACIÓN (FORMULARIO F1 - F5 COMPLETO)
                               SingleChildScrollView(
                                 padding: const EdgeInsets.all(16),
                                 child: Form(
@@ -477,6 +479,51 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
                                             ),
                                             keyboardType: TextInputType.number,
                                             validator: (value) => value == null || value.isEmpty ? 'Requerido' : null,
+                                          ),
+                                        ),
+                                      ),
+                                      _buildCasillaCard(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: TextFormField(
+                                            controller: _f3DeudasInformalesController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'F3: Saldo total Deudas Informales (S/)',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            keyboardType: TextInputType.number,
+                                            validator: (value) => value == null || value.isEmpty ? 'Requerido' : null,
+                                          ),
+                                        ),
+                                      ),
+                                      _buildCasillaCard(
+                                        child: SwitchListTile(
+                                          title: const Text('F4: ¿Cuenta con activos/mercadería visibles?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                                          value: _f4TieneActivos,
+                                          activeColor: purpuraAlfin,
+                                          onChanged: (val) => setState(() => _f4TieneActivos = val),
+                                        ),
+                                      ),
+                                      _buildCasillaCard(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('F5: Reputación y Carácter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                                              DropdownButton<String>(
+                                                value: _f5ReputacionCaracter,
+                                                onChanged: (String? newVal) {
+                                                  if (newVal != null) setState(() => _f5ReputacionCaracter = newVal);
+                                                },
+                                                items: <String>['BUENA', 'REGULAR', 'SOSPECHOSA'].map<DropdownMenuItem<String>>((String value) {
+                                                  return DropdownMenuItem<String>(
+                                                    value: value,
+                                                    child: Text(value, style: TextStyle(color: value == 'SOSPECHOSA' ? Colors.red : Colors.black)),
+                                                  );
+                                                }).toList(),
+                                              )
+                                            ],
                                           ),
                                         ),
                                       ),
@@ -538,14 +585,14 @@ class _FichaEvaluacionScreenState extends State<FichaEvaluacionScreen> with Sing
                                 ),
                               ),
 
-                              // PESTAÑA DETALLES (CORREGIDA CON DNI DINÁMICO)
+                              // PESTAÑA DETALLES
                               ListView(
                                 padding: const EdgeInsets.all(16),
                                 children: [
                                   ListTile(
                                     leading: const Icon(Icons.credit_card, color: purpuraAlfin), 
                                     title: const Text('DNI del Cliente', style: TextStyle(fontWeight: FontWeight.bold)), 
-                                    subtitle: Text(dniCliente), // Muestra el DNI real mapeado dinámicamente
+                                    subtitle: Text(dniCliente),
                                   ),
                                   ListTile(
                                     leading: const Icon(Icons.bar_chart, color: purpuraAlfin), 
@@ -637,7 +684,7 @@ class _EfectoShimmerContenedorState extends State<EfectoShimmerContenedor> with 
                       gradient: LinearGradient(
                         colors: [
                           Colors.white.withOpacity(0.0),
-                          Colors.white.withOpacity(0.55), 
+                          Colors.white.withOpacity(0.40), 
                           Colors.white.withOpacity(0.0),
                         ],
                         stops: const [0.35, 0.5, 0.65],

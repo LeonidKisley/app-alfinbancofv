@@ -43,6 +43,7 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
       _errorMessage = null;
     });
     try {
+      // Traemos la lista de créditos unida con la información básica del cliente
       final response = await _supabase
           .from('creditos_preaprobados')
           .select('''
@@ -67,14 +68,12 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
       final data = (response as List<dynamic>)
           .map((item) => item as Map<String, dynamic>)
           .toList();
-            // !!! AGREGA ESTA LÍNEA AQUÍ !!!
-          print("🚨 RESPUESTA DE BASE DE DATOS EN ESTE SEGUNDO: $data");
-
           
       if (mounted) {
         setState(() {
           _clientesPreaprobados = data;
           
+          // Ordenamos la cartera priorizando los scores transaccionales más altos
           _clientesPreaprobados.sort((a, b) {
             final scoreA = a['score_transaccional'] ?? 0;
             final scoreB = b['score_transaccional'] ?? 0;
@@ -86,7 +85,6 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
         });
       }
     } catch (e) {
-      print('ERROR REAL DE SUPABASE: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -106,15 +104,18 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
         final String dniReal = (cliente['dni'] ?? '').toString().toLowerCase(); 
         final String query = _searchQuery.toLowerCase().trim();
         
+        // Búsqueda por coincidencia en datos clave del cliente
         final bool matchSearch = query.isEmpty || 
             nombresReal.contains(query) || 
             apellidosReal.contains(query) ||
             dniReal.contains(query);
 
+        // Filtro por segmento comercial
         final String segmentoReal = (item['segmento'] ?? 'BASICO').toString().toUpperCase().trim();
         final String filtroSegTarget = _filtroSegmento.toUpperCase().trim();
         final bool matchSegmento = filtroSegTarget == 'TODOS' || segmentoReal == filtroSegTarget;
             
+        // Regla de negocio para agrupar estados de pago en Vigentes (Al día o vacío) y Con Atraso
         bool matchEstado = false;
         if (_filtroEstado == 'TODOS') {
           matchEstado = true;
@@ -143,6 +144,7 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Paleta de colores institucional (Alfin Banco)
     const Color purpuraAlfin = Color(0xFF8B2BB3);
     const Color naranjaAlfin = Color(0xFFF15A24);
     const Color purpuraOscuroAlfin = Color(0xFF250A3A); 
@@ -210,9 +212,6 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
                             itemCount: _clientesFiltrados.length,
                             itemBuilder: (context, index) {
                               final item = _clientesFiltrados[index];
-                              
-                              // Retornamos la tarjeta DIRECTAMENTE sin envolverla en el Shimmer Premier
-                              // para obligar a Flutter a pintar los datos reales de Henry y Sonia
                               return _buildClienteCardPremium(context, item, purpuraAlfin, naranjaAlfin);
                             },
                           ),
@@ -307,17 +306,11 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
     final String nombres = cliente['nombres'] ?? 'Cliente sin Nombre';
     final String apellidos = cliente['apellidos'] ?? '';
     final String negocio = cliente['nombre_negocio'] ?? 'Giro Comercial';
-    
     final String direccionNegocio = (cliente['direccion_negocio'] ?? '').toString().trim();
     
-    // =======================================================================
-    // EXTRACCIÓN DIRECTA DESDE LA TABLA 'perfiles_clientes' SIN FILTROS EXTRA
-    // =======================================================================
+    // Obtenemos los campos de ubicación directamente del perfil del cliente
     final String distritoDeBaseDatos = (cliente['distrito'] ?? '').toString().trim();
-    
     final String textoDistritoReal = distritoDeBaseDatos.isNotEmpty ? distritoDeBaseDatos : 'S/D';
-    
-    // CORRECCIÓN AQUÍ: Se eliminó la variable inexistente 'direccionLinter' para usar el String correcto
     final String textoDireccionAmarillo = direccionNegocio.isNotEmpty ? direccionNegocio : 'Sin dirección';
 
     final double monto = (item['monto_aprobado'] ?? 0.0).toDouble();
@@ -337,6 +330,7 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () async {
+          // Navegamos al detalle y recargamos la lista si hubo algún cambio o guardado interno
           final refrescar = await Navigator.push(
             context,
             MaterialPageRoute(
@@ -352,7 +346,6 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Fila Superior: Segmento y Estado de Pago
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -396,15 +389,11 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
                 ],
               ),
               const SizedBox(height: 14),
-              
-              // Nombre del Cliente
               Text(
                 "$nombres $apellidos",
                 style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF212121), letterSpacing: -0.2),
               ),
               const SizedBox(height: 10),
-              
-              // Fila de Giro Comercial (Negocio)
               Row(
                 children: [
                   const Icon(Icons.storefront_rounded, size: 15, color: Colors.black45),
@@ -419,14 +408,10 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // Fila de Ubicación: Dirección + Caja de Distrito Único
               Row(
                 children: [
                   const Icon(Icons.location_on_outlined, size: 15, color: Colors.black45),
                   const SizedBox(width: 6),
-                  
-                  // Dirección exacta
                   Expanded(
                     flex: 2,
                     child: Text(
@@ -436,8 +421,6 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  
-                  // CONTENEDOR DE DISTRITO EXTRAÍDO DIRECTAMENTE DE LA COLUMNA DE LA BASE DE DATOS
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
@@ -456,7 +439,6 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
                   ),
                 ],
               ),
-
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 14),
                 child: Divider(height: 1, color: Color(0xFFF1F3F5)),
@@ -549,6 +531,7 @@ class _ListaCarteraScreenState extends State<ListaCarteraScreen> {
   }
 }
 
+// Widget auxiliar opcional para añadir un efecto de destello visual animado
 class EfectoShimmerPremier extends StatefulWidget {
   final Widget child;
   const EfectoShimmerPremier({Key? key, required this.child}) : super(key: key);

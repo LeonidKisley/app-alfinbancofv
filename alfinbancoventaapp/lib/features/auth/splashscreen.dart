@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:alfinbancoventaapp/features/auth/loginscreen.dart'; // Ajusta la ruta a tu login
+import 'package:alfinbancoventaapp/features/auth/loginscreen.dart'; 
+
+// Importante mantener la consistencia con los colores del login
+class AlfinColors {
+  static const Color purpura = Color(0xFF8B2BB3);
+  static const Color naranjaFuerte = Color.fromARGB(255, 245, 75, 2);
+}
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -8,20 +14,20 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
     
-    // Esperamos 2 segundos y navegamos al Login
+    // Retardo para mostrar el branding antes de cargar la pantalla de login
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       
-      // Transición sutil de desvanecimiento (Fade)
+      // Animación fade personalizada para suavizar la entrada al login
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 2000),
+          transitionDuration: const Duration(milliseconds: 1200),
           pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -33,22 +39,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final tamanoPantalla = MediaQuery.of(context).size;
+
     return Scaffold(
-      // Usamos el color naranja principal de Alfin
-      backgroundColor: Theme.of(context).primaryColor, 
+      backgroundColor: AlfinColors.naranjaFuerte, 
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Tu logo
+            // Carga del logo oficial con fallback por si hay problemas de rutas
             Image.asset(
-              'assets/alfinbancologo.png',
-              width: MediaQuery.of(context).size.width * 0.7,
+              'assets/images/alfinbancologo.png',
+              width: tamanoPantalla.width * 0.7,
               errorBuilder: (context, error, stackTrace) =>
                   const Icon(Icons.account_balance, size: 100, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            // El eslogan que mencionaste
+            
             const Text(
               "nuestro banco",
               style: TextStyle(
@@ -59,12 +66,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
             const SizedBox(height: 50),
-            // Un indicador de carga discreto blanco
-            const CircularProgressIndicator(color: Colors.white),
+            
+            // Loader básico para indicar que el sistema está respondiendo
+            const CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 3,
+            ),
           ],
         ),
       ),
     );
   }
 }
-

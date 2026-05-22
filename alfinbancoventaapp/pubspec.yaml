@@ -65,9 +65,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/alfinbancologo2.jpg"    # <-- Ruta arreglada (sin duplicados)
+  image_path: "assets/images/alfinbancologo2.jpg"   
   adaptive_icon_background: "#8B2BB3"
-  adaptive_icon_foreground: "assets/images/alfinbancologo2.jpg" # <-- Cambiado para usar el logo real que sí existe
+  adaptive_icon_foreground: "assets/images/alfinbancologo2.jpg" 
 
 
 # The following section is specific to Flutter packages.
@@ -79,7 +79,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/alfinbancologo2.jpg
-    - assets/images/alfinbancologo.png # <--- ESTA LÍNEA ES NECESARIA
+    - assets/images/alfinbancologo.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

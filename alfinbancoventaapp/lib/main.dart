@@ -5,15 +5,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:alfinbancoventaapp/features/dashboard/fuerzaventascontrolscreen.dart'; 
 import 'package:alfinbancoventaapp/features/dashboard/admindashboardscreen.dart';
 
+// Definición global de colores para no duplicar código en las pantallas
+class AlfinColors {
+  static const Color purpura = Color(0xFF8B2BB3);
+  static const Color naranja = Color(0xFFF15A24);
+  static const Color fondo = Color(0xFFF8F9FA);
+}
 
 void main() async {
-  // Asegura que los bindings de Flutter estén listos antes de inicializar servicios nativos
+  // Asegura que Flutter cargue los componentes nativos antes de levantar Supabase
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa Supabase de forma global
+  // Conexión inicial con la base de datos de Supabase
   await Supabase.initialize(
-    url: 'https://ktzqtgtbpzimlmosksws.supabase.co', // Reemplaza con tu URL real
-    anonKey: 'sb_publishable_fP6lXh2URP_aLq5j03PL2Q_SKEr03Hl',       // Reemplaza con tu llave Anon real
+    url: 'https://ktzqtgtbpzimlmosksws.supabase.co', 
+    anonKey: 'sb_publishable_fP6lXh2URP_aLq5j03PL2Q_SKEr03Hl', 
   );
 
   runApp(const MyApp());
@@ -24,40 +30,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definimos la paleta de colores oficial de Alfin Banco
-    const Color purpuraAlfin = Color(0xFF8B2BB3);
-    const Color naranjaAlfin = Color(0xFFF15A24);
-
     return MaterialApp(
       title: 'Alfin Banco Admin',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        primaryColor: purpuraAlfin,
+        primaryColor: AlfinColors.purpura,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: purpuraAlfin,
-          primary: purpuraAlfin,
-          secondary: naranjaAlfin,
+          seedColor: AlfinColors.purpura,
+          primary: AlfinColors.purpura,
+          secondary: AlfinColors.naranja,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        scaffoldBackgroundColor: AlfinColors.fondo,
         fontFamily: 'Roboto',
       ),
-      // CAMBIADO: La aplicación arranca de forma segura con el Login de la carpeta auth
+      // El flujo inicia directo en el Splash para validar sesión
       home: const SplashScreen(),
     );
   }
 }
 
-/// Pantalla intermedia para seleccionar el perfil operativo dentro de la App de Gestión
-/// (Nota: A esta pantalla podrás saltar tras implementar las lógicas o rutas de depuración)
+// Menú temporal para alternar vistas mientras se terminan de enlazar los roles de usuario
 class AccesoEcosistemaScreen extends StatelessWidget {
   const AccesoEcosistemaScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const Color purpuraAlfin = Color(0xFF8B2BB3);
-    const Color naranjaAlfin = Color(0xFFF15A24);
-
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -65,7 +63,7 @@ class AccesoEcosistemaScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [purpuraAlfin, Color(0xFF5A1878)],
+            colors: [AlfinColors.purpura, Color(0xFF5A1878)],
           ),
         ),
         child: SafeArea(
@@ -76,7 +74,7 @@ class AccesoEcosistemaScreen extends StatelessWidget {
               children: [
                 const Spacer(),
                 
-                // CAMBIADO: Se eliminó el Icon genérico y se configuró tu imagen real del logo con un clip circular
+                // Contenedor del logo con respaldo por si no carga el asset local
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
@@ -88,11 +86,10 @@ class AccesoEcosistemaScreen extends StatelessWidget {
                       height: 90,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        // En caso de que falle por caché, muestra un respaldo dinámico para evitar pantallazos rojos
                         return const Icon(
                           Icons.admin_panel_settings_rounded,
                           size: 75,
-                          color: purpuraAlfin,
+                          color: AlfinColors.purpura,
                         );
                       },
                     ),
@@ -128,12 +125,12 @@ class AccesoEcosistemaScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // 1. Botón Modo Administrador Central / Jefe de Agencia
+                // Botón para ingresar como Administrador / Jefe de Agencia
                 _buildRolButton(
                   context: context,
                   label: "Panel de Administración",
                   icon: Icons.shield_outlined,
-                  color: naranjaAlfin,
+                  color: AlfinColors.naranja,
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -146,13 +143,13 @@ class AccesoEcosistemaScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // 2. Botón Modo Monitoreo Directo de Asesores
+                // Botón para ir al mapa de monitoreo de los asesores
                 _buildRolButton(
                   context: context,
                   label: "Fuerza de Ventas (Monitoreo)",
                   icon: Icons.badge_outlined,
                   color: Colors.white,
-                  textColor: purpuraAlfin,
+                  textColor: AlfinColors.purpura,
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -169,6 +166,7 @@ class AccesoEcosistemaScreen extends StatelessWidget {
     );
   }
 
+  // Cómponente modular para reutilizar el diseño de los botones de acceso
   Widget _buildRolButton({
     required BuildContext context,
     required String label,
